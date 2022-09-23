@@ -17,10 +17,11 @@ type event = {
 type listEventOptions = {
     start: int,
     end: int,
-    timezone: string
+    firstIndex: int,
+    afterToken: Js.Option.t<string>
 }
 
-let listEvents = (dynamoFunc, options, firstIndex, afterToken) => {
+let listEvents = (dynamoFunc, options) => {
     resolve(
         [
             { 

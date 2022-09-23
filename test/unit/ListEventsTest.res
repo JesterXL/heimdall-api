@@ -11,7 +11,7 @@ let stubDynamo = () => { () }
 
 
 testAsync("should cool async", cb => {
-  let _ = listEvents(stubDynamo, { start: 100, end: 100, timezone: "utc" }, 3, "token")
+  let _ = listEvents(stubDynamo, { start: 90, end: 400, firstIndex: 1, afterToken: None })
   ->then(
     events => {
       switch Belt.Array.get(events, 0) {
@@ -21,7 +21,7 @@ testAsync("should cool async", cb => {
         resolve(false)
       }
       | Some(firstEvent) => {
-        stringEqual(firstEvent.eventName, "Tst")
+        stringEqual(firstEvent.eventName, "Test")
         cb(~planned=1, ())
         resolve(true)
       }

@@ -1,16 +1,48 @@
 const aws = require('aws-sdk')
-const dynamo = new aws.DynamoDB.DocumentClient()
+const dynamo = new aws.DynamoDB.DocumentClient({ region: 'us-east-1'})
+
+// dynamo.query({
+//     TableName: 'eventsAndApps',
+//     IndexName: 'listEvents',
+//     KeyConditionExpression: 'PK = :PK',
+//     ExpressionAttributeValues: {
+//         ':PK': 'event'
+//     },
+//     Limit: 1,
+//     ExclusiveStartKey: undefined
+// })
+// .promise()
+// .then(
+//     ({ Items, LastEvaluatedKey }) =>
+//         ({ items: Items, lastEvaluatedKey: LastEvaluatedKey })
+// )
+// .then(console.log)
 
 dynamo.query({
     TableName: 'eventsAndApps',
-    IndexName: 'listApps',
-    KeyConditionExpression: 'PK = :PK',
+    IndexName: 'listEvents',
+    KeyConditionExpression: 'PK = :PK AND #start BETWEEN :startTime AND :endTime',
+    ExpressionAttributeNames: {
+        '#start': 'start',
+    },
     ExpressionAttributeValues: {
-        ':PK': 'event-22'
-    }
+        ':PK': 'event',
+        ':startTime': 90,
+        ':endTime': 400
+    },
 })
 .promise()
 .then(console.log)
+
+// KeyConditionExpression: "Id = :id AND #DocTimestamp BETWEEN :start AND :end",
+//    ExpressionAttributeNames: {
+//      '#DocTimestamp': 'Timestamp'
+//    },
+//    ExpressionAttributeValues: {
+//      ":id": "SOME VALUE",
+//      ":start": 1,
+//      ":end": 10
+//    }
 
 
 // ExpressionAttributeValues: {

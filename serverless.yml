@@ -337,7 +337,7 @@ resources:
         KeySchema: 
           - AttributeName: PK 
             KeyType: HASH
-          - AttributeName: lastUpdated 
+          - AttributeName: start 
             KeyType: RANGE
         LocalSecondaryIndexes:
           - IndexName: listEvents

@@ -14,13 +14,14 @@ function stubDynamo(param) {
 
 Test.testAsync("should cool async", undefined, (function (cb) {
         $$Promise.$$catch(ListEvents.listEvents(stubDynamo, {
-                    start: 100,
-                    end: 100,
-                    timezone: "utc"
-                  }, 3, "token").then(function (events) {
+                    start: 90,
+                    end: 400,
+                    firstIndex: 1,
+                    afterToken: undefined
+                  }).then(function (events) {
                   var firstEvent = Belt_Array.get(events, 0);
                   if (firstEvent !== undefined) {
-                    Assertions.stringEqual(undefined, firstEvent.eventName, "Tst");
+                    Assertions.stringEqual(undefined, firstEvent.eventName, "Test");
                     Curry._2(cb, 1, undefined);
                     return Promise.resolve(true);
                   } else {

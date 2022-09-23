@@ -2,7 +2,7 @@
 'use strict';
 
 
-function listEvents(dynamoFunc, options, firstIndex, afterToken) {
+function listEvents(dynamoFunc, options) {
   return Promise.resolve([{
                 eventName: "Test",
                 lastUpdated: 123,
