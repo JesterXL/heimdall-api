@@ -1,5 +1,15 @@
 open Promise
 
+// // ---- AppSync Lambda Request ----
+
+// type requestContext = {
+//     apiId: string,
+//     accountId: string,
+//     requestId: string,
+//     queryString: string,
+//     operationName: string
+// }
+
 type permission
     = Free
     | Blocked
@@ -113,6 +123,11 @@ let listEvents = (dynamoFunc, options) => {
 }
 
 let listEventsPartial = listEvents(listEventsJS)
+
+let handler = event => {
+    Js.log2("event:", event)
+    resolve(event)
+}
 
 if %raw(`require.main === module`) {
     let _ = listEventsPartial({

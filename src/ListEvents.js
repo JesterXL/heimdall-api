@@ -164,6 +164,11 @@ function listEventsPartial(param) {
   return listEvents(listEventsJS, param);
 }
 
+function handler($$event) {
+  console.log("event:", $$event);
+  return Promise.resolve($$event);
+}
+
 if ((require.main === module)) {
   listEvents(listEventsJS, {
           start: 90,
@@ -180,4 +185,5 @@ exports.Codecs = Codecs;
 exports.listEventsJS = listEventsJS;
 exports.listEvents = listEvents;
 exports.listEventsPartial = listEventsPartial;
+exports.handler = handler;
 /* lastEvaluatedEvent Not a pure module */
