@@ -22,7 +22,7 @@ plugins:
 
 functions:
   listEvents:
-    # role: ${self:custom.config.iam.functionRole}
+    role: ${self:custom.config.iam.functionRole}
     handler: src/ListEvents.handler
     environment:
       NODE_ENV: ${sls:stage}
@@ -31,6 +31,11 @@ functions:
     #   alias: Live
     #   preTrafficHook: minMaxPreHook
     #   postTrafficHook: minMaxPostHook
+  validateJWT:
+    role: ${self:custom.config.iam.functionRole}
+    handler: src/ValidateJWT.handler
+    environment:
+      NODE_ENV: ${sls:stage}
 
 custom:
   config: ${file(./serverless-stages/${sls:stage}.yml)}
@@ -97,9 +102,9 @@ custom:
 #     #   appIdClientRegex: # optional      
 #     # if AWS_LAMBDA
     lambdaAuthorizerConfig:
-      functionName: listEvents
+      functionName: validateJWT
       # functionAlias: # optional, used with functionName
-      lambdaFunctionArn: !GetAtt ListEventsLambdaFunction.Arn
+      lambdaFunctionArn: !GetAtt ValidateJWTLambdaFunction.Arn
       # identityValidationExpression: # optional
       # authorizerResultTtlInSeconds: # optional
 #     # if OPENID_CONNECT

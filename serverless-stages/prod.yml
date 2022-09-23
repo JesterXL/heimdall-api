@@ -1,3 +1,3 @@
 iam:
-  functionRole: some IAM Role ARN
+  functionRole: arn:aws:iam::${env:AWS_ACCOUNT}:role/lambda_basic_execution
   appSyncRole: some IAM Role ARN
