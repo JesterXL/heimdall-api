@@ -18,21 +18,37 @@ const dynamo = new aws.DynamoDB.DocumentClient({ region: 'us-east-1'})
 // )
 // .then(console.log)
 
-dynamo.query({
-    TableName: 'eventsAndApps',
-    IndexName: 'listEvents',
-    KeyConditionExpression: 'PK = :PK AND #start BETWEEN :startTime AND :endTime',
-    ExpressionAttributeNames: {
-        '#start': 'start',
-    },
-    ExpressionAttributeValues: {
-        ':PK': 'event',
-        ':startTime': 90,
-        ':endTime': 400
-    },
-})
-.promise()
-.then(console.log)
+// naive implementation that doesn't really allow efficient
+// paging right now.
+const listEvents = (startTime, endTime, first, lastEvaluatedKey) =>
+    dynamo.query({
+        TableName: 'eventsAndApps',
+        IndexName: 'listEvents',
+        KeyConditionExpression: 'PK = :PK AND #start BETWEEN :startTime AND :endTime',
+        ExpressionAttributeNames: {
+            '#start': 'start',
+        },
+        ExpressionAttributeValues: {
+            ':PK': 'event',
+            ':startTime': startTime,
+            ':endTime': endTime
+        },
+        // Limit: limit,
+        LastEvaluatedKey: lastEvaluatedKey
+    })
+    .promise()
+    .then(
+        ({ Items, LastEvaluatedKey }) =>
+            LastEvaluatedKey
+            ? ({ items: Items, lastEvaluatedKey: LastEvaluatedKey, ok: true })
+            : ({ items: Items, ok: true })
+    )
+    .catch(
+        error =>
+            Promise.resolve({ ok: false, error: `DynamoDB error: ${error?.message}`, items: [] })
+    )
+
+// listEvents(90, 200, 1, undefined).then(console.log)
 
 // KeyConditionExpression: "Id = :id AND #DocTimestamp BETWEEN :start AND :end",
 //    ExpressionAttributeNames: {
@@ -94,3 +110,8 @@ dynamo.query({
 // app-72   Calc   Jesse   Mark   store customer
 
 // needs creation date and last updated date
+
+
+module.exports = {
+    listEvents
+}
