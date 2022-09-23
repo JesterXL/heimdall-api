@@ -1,0 +1,75 @@
+{
+    "name": "heimdallapi",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "npm run test:unit",
+        "test:unit": "NODE_ENV=test retest test/unit/**/*Test.js test/unit/*Test.js",
+        "test:integration:dev": "NODE_ENV=dev_test mocha --parallel test/integration/",
+        "test:integration:stage": "NODE_ENV=stage_test mocha --parallel test/integration/",
+        "triggererror": "NODE_ENV=dev npx mocha test/integration/errorParsing.test.js",
+        "coverage": "rm -rf coverage | true && nyc --reporter=lcov --reporter=text retest test/unit/**/*.js test/unit/*.js",
+        "test:report": "JUNIT_REPORT_PATH=./report.xml mocha --reporter=mocha-jenkins-reporter test/unit/**/*Test.js test/unit/*Test.js",
+        "deploy": "serverless deploy",
+        "remove": "serverless remove",
+        "build": "rescript",
+        "clean": "rescript clean -with-deps",
+        "start": "rescript build -w"
+    },
+    "nyc": {
+        "exclude": [
+            "**/getSecret.js",
+            "**/jwt.js",
+            "**/loggerWrapper.js",
+            "**/simpleFetchJSONString.js",
+            "**/Logger.js",
+            "**/SimpleFetch.js",
+            "**/pinoWrapper.js",
+            "**/statsdHotShots.js",
+            "**/StatsD.js",
+            "**/ProductTypesV3.js",
+            "**/buffer.js",
+            "**/sns.js",
+            "**/hooks.js",
+            "**/test/**"
+        ],
+        "check-coverage": true,
+        "lines": 76,
+        "statements": 76
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "chai": "^4.3.5",
+        "mocha": "^9.2.0",
+        "mocha-jenkins-reporter": "^0.4.7",
+        "nyc": "^15.1.0",
+        "rescript": "^9.1.4",
+        "rescript-test": "^3.4.1",
+        "serverless": "^3.18.0",
+        "serverless-appsync-plugin": "^1.12.1",
+        "serverless-plugin-aws-alerts": "^1.7.4",
+        "serverless-plugin-canary-deployments": "^0.7.1",
+        "serverless-prune-versions": "^1.0.4",
+        "uuid": "^8.3.2"
+    },
+    "dependencies": {
+        "@aws-sdk/client-cloudwatch-logs": "^3.54.0",
+        "@rescript/std": "^9.1.3",
+        "@ryyppy/rescript-promise": "^2.1.0",
+        "aws-sdk": "^2.1218.0",
+        "aws-xray-sdk": "^3.3.6",
+        "install": "^0.13.0",
+        "jsonwebtoken": "^8.5.1",
+        "jws": "^4.0.0",
+        "node-fetch": "^2.6.6",
+        "npm": "^8.5.4",
+        "rescript-jzon": "^1.3.0",
+        "rescript-uuid": "^8.3.2-alpha"
+    },
+    "overrides": {
+        "serverless": "^3.18.0"
+    }
+}

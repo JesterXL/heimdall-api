@@ -1,0 +1,3 @@
+iam:
+  functionRole: some IAM Role ARN
+  appSyncRole: some IAM Role ARN

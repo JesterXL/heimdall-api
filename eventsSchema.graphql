@@ -1,0 +1,91 @@
+type Query {
+  listEvents(timeRange: InputTimeRange!, first: Int!, after: String!): EventsResponse!
+  createEvent(event: InputCreateEvent!): EventNode!
+  deleteEvent(eventID: ID!): ID!
+  editEvent(event: InputCreateEvent!): EventNode!
+
+  createApp(app: InputApp!): AppNode!
+  listApps(first: Int!, after: String!): AppsResponse!
+  deleteApp(id: ID!): ID!
+  updateApp(app: InputApp!): AppNode!
+}
+
+input InputTimeRange {
+  start: Float!
+  end: Float!
+  timezone: String!
+}
+
+type EventsResponse {
+  totalCount: Int!
+  edges: [EventsEdge!]!
+  pageInfo: PageInfo!
+}
+
+type EventsEdge {
+  node: EventNode!
+  cursor: String!
+}
+
+type EventNode {
+  id: ID!
+  name: String!
+  timeRange: TimeRange!
+  permission: Permission! 
+}
+
+type TimeRange {
+  start: Float!
+  end: Float!
+  timezone: String!
+}
+
+type PageInfo {
+  endCursor: String!
+  hasNextPage: Boolean!
+}
+
+enum Permission {
+  Free
+  Blocked
+  Request
+}
+
+input InputCreateEvent {
+  name: String!
+  timeRange: InputTimeRange!
+  permission: Permission!
+}
+
+input InputApp {
+  name: String!
+  owner: String!
+  lead: String!
+  appType: AppType!
+}
+
+type AppNode {
+  id: ID!
+  name: String!
+  owner: String!
+  lead: String!
+  appType: AppType!
+}
+
+enum AppType {
+  Associate
+  Merchant
+  StoreCustomer
+}
+
+type AppsResponse {
+  totalCount: Int!
+  edges: [AppsEdge!]!
+  pageInfo: PageInfo!
+}
+
+type AppsEdge {
+  node: AppNode!
+  cursor: String!
+}
+
