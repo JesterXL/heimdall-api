@@ -13,7 +13,6 @@ type Query {
 input InputTimeRange {
   start: Float!
   end: Float!
-  timezone: String!
 }
 
 type EventsResponse {
@@ -37,7 +36,6 @@ type EventNode {
 type TimeRange {
   start: Float!
   end: Float!
-  timezone: String!
 }
 
 type PageInfo {

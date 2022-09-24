@@ -1,14 +1,43 @@
 open Promise
 
-// // ---- AppSync Lambda Request ----
+module RequestCodecs = {
 
-// type requestContext = {
-//     apiId: string,
-//     accountId: string,
-//     requestId: string,
-//     queryString: string,
-//     operationName: string
-// }
+    type timeRange = {
+        start: int,
+        end: int
+    }
+
+    let timeRange = Jzon.object2(
+        ({ start, end }) => ( start, end ),
+        (( start, end )) => { start, end } -> Ok,
+        Jzon.field("start", Jzon.int),
+        Jzon.field("end", Jzon.int)
+    )
+
+    type arguments = {
+        timeRange: timeRange,
+        first: int,
+        after: string
+    }
+
+    let arguments = Jzon.object3(
+        ({ timeRange, first, after }) => ( timeRange, first, after ),
+        (( timeRange, first, after )) => { timeRange, first, after } -> Ok,
+        Jzon.field("timeRange", timeRange),
+        Jzon.field("first", Jzon.int),
+        Jzon.field("after", Jzon.string)
+    )
+
+    type inputEvent = {
+        arguments: arguments
+    }
+
+    let inputEvent = Jzon.object1(
+        ({ arguments }) => ( arguments ),
+        (( arguments )) => { arguments: arguments } -> Ok,
+        Jzon.field("arguments", arguments)
+    )
+}
 
 type permission
     = Free
@@ -89,32 +118,29 @@ module Codecs = {
 }
 
 
-@module("./services/query.js") external listEventsJS: (int, int, int, Js.Option.t<string>) => Promise.t<Js.Json.t> = "listEvents"
+@module("./services/query.js") external listEventsJS: (int, int, int, string) => Promise.t<Js.Json.t> = "listEvents"
 
-let listEvents = (dynamoFunc, options) => {
-    // resolve(
-    //     [
-    //         { 
-    //             eventName: "Test",
-    //             lastUpdated: 123,
-    //             permission: Blocked,
-    //             end: 456,
-    //             primaryKey: "event",
-    //             start: 123
-    //         }
-    //     ]
-    // )
-    dynamoFunc(options.start, options.end, options.firstIndex, options.afterToken)
+exception ListEventsException(string)
+
+let listEvents = (listEventsFromDynamoFunc, event) => {
+    switch Jzon.decodeWith(event, RequestCodecs.inputEvent) {
+    | Error(reason) => reject(ListEventsException(Jzon.DecodingError.toString(reason)))
+    | Ok(options) => resolve(options)
+    }
+    ->then(
+        event =>
+            listEventsFromDynamoFunc(event.arguments.timeRange.start, event.arguments.timeRange.end, event.arguments.first, event.arguments.after)
+    )
     ->then(
         response => {
             Js.log2("listEvents response:", response)
             switch Jzon.decodeWith(response, Codecs.listEventsDynamoResponse) {
-            | Error(reason) => Error("listEvents failed to decode the dynamo query response: " ++ Jzon.DecodingError.toString(reason)) -> resolve
+            | Error(reason) => reject(ListEventsException("listEvents failed to decode the dy response: " ++ Jzon.DecodingError.toString(reason)))
             | Ok(data) => {
                 if(data.ok === true) {
-                    Ok(data) -> resolve
+                    resolve(data)
                 } else {
-                    Error(Js.Option.getWithDefault("Unknown JS error", data.error)) -> resolve
+                    reject(ListEventsException(Js.Option.getWithDefault("Unknown JS error", data.error)))
                 }
             }
             }
@@ -130,12 +156,16 @@ let handler = event => {
 }
 
 if %raw(`require.main === module`) {
-    let _ = listEventsPartial({
-        start: 90,
-        end: 400,
-        firstIndex: 0,
-        afterToken: None
-    })
+    let _ = listEventsPartial(Js.Json.parseExn(`{
+        arguments: {
+            timeRange: {
+                start: 90,
+                end: 400,
+            },
+            firstIndex: 0,
+            afterToken: None
+        }
+    }`))
     ->then(
         result => {
             Js.log2("result:", result)

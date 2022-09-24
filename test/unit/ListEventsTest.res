@@ -22,19 +22,23 @@ let stubDynamo = (_, _, _, _) =>
 
 
 testAsync("should cool async", cb => {
-	let _ = listEvents(stubDynamo, { start: 90, end: 400, firstIndex: 1, afterToken: None })
+	let stubEvent = Js.Json.parseExn(`
+	{
+		"arguments": {
+			"timeRange": {
+				"start": 90,
+				"end": 400
+			},
+			"first": 1,
+			"after": ""
+		}
+	}`)
+	let _ = listEvents(stubDynamo, stubEvent)
 	->then(
-		result => {
-			switch result {
-			| Error(reason) => {
-				fail(())
-				cb(~planned=1, ())
-				resolve(false)
-			}
-			| Ok({ items }) => {
-				switch Belt.Array.get(items, 0) {
+		data =>
+			switch Belt.Array.get(data.items, 0) {
 				| None => {
-					fail(())
+					fail(~message="Failed to find a first item", ())
 					cb(~planned=1, ())
 					resolve(false)
 				}
@@ -43,14 +47,12 @@ testAsync("should cool async", cb => {
 					cb(~planned=1, ())
 					resolve(true)
 				}
-				}
 			}
-			}
-		}
 	)
 	->catch(
-		_ => {
-			fail(())
+		error => {
+			Js.log2("error:", error)
+			fail(~message=`listEvents exception`, ())
 			cb(~planned=1, ())
 			resolve(false)
 		}

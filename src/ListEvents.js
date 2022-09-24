@@ -4,7 +4,57 @@
 var Jzon = require("rescript-jzon/src/Jzon.js");
 var Curry = require("@rescript/std/lib/js/curry.js");
 var Js_option = require("@rescript/std/lib/js/js_option.js");
+var Caml_exceptions = require("@rescript/std/lib/js/caml_exceptions.js");
 var QueryJs = require("./services/query.js");
+
+var timeRange = Jzon.object2((function (param) {
+        return [
+                param.start,
+                param.end
+              ];
+      }), (function (param) {
+        return {
+                TAG: /* Ok */0,
+                _0: {
+                  start: param[0],
+                  end: param[1]
+                }
+              };
+      }), Jzon.field("start", Jzon.$$int), Jzon.field("end", Jzon.$$int));
+
+var $$arguments = Jzon.object3((function (param) {
+        return [
+                param.timeRange,
+                param.first,
+                param.after
+              ];
+      }), (function (param) {
+        return {
+                TAG: /* Ok */0,
+                _0: {
+                  timeRange: param[0],
+                  first: param[1],
+                  after: param[2]
+                }
+              };
+      }), Jzon.field("timeRange", timeRange), Jzon.field("first", Jzon.$$int), Jzon.field("after", Jzon.string));
+
+var inputEvent = Jzon.object1((function (param) {
+        return param.arguments;
+      }), (function ($$arguments) {
+        return {
+                TAG: /* Ok */0,
+                _0: {
+                  arguments: $$arguments
+                }
+              };
+      }), Jzon.field("arguments", $$arguments));
+
+var RequestCodecs = {
+  timeRange: timeRange,
+  $$arguments: $$arguments,
+  inputEvent: inputEvent
+};
 
 var lastEvaluatedEvent = Jzon.object3((function (param) {
         return [
@@ -135,26 +185,33 @@ function listEventsJS(prim0, prim1, prim2, prim3) {
   return QueryJs.listEvents(prim0, prim1, prim2, prim3);
 }
 
-function listEvents(dynamoFunc, options) {
-  return Curry._4(dynamoFunc, options.start, options.end, options.firstIndex, options.afterToken).then(function (response) {
+var ListEventsException = /* @__PURE__ */Caml_exceptions.create("ListEvents.ListEventsException");
+
+function listEvents(listEventsFromDynamoFunc, $$event) {
+  var reason = Jzon.decodeWith($$event, inputEvent);
+  var tmp;
+  tmp = reason.TAG === /* Ok */0 ? Promise.resolve(reason._0) : Promise.reject({
+          RE_EXN_ID: ListEventsException,
+          _1: Jzon.DecodingError.toString(reason._0)
+        });
+  return tmp.then(function ($$event) {
+                return Curry._4(listEventsFromDynamoFunc, $$event.arguments.timeRange.start, $$event.arguments.timeRange.end, $$event.arguments.first, $$event.arguments.after);
+              }).then(function (response) {
               console.log("listEvents response:", response);
               var reason = Jzon.decodeWith(response, listEventsDynamoResponse);
               if (reason.TAG !== /* Ok */0) {
-                return Promise.resolve({
-                            TAG: /* Error */1,
-                            _0: "listEvents failed to decode the dynamo query response: " + Jzon.DecodingError.toString(reason._0)
+                return Promise.reject({
+                            RE_EXN_ID: ListEventsException,
+                            _1: "listEvents failed to decode the dy response: " + Jzon.DecodingError.toString(reason._0)
                           });
               }
               var data = reason._0;
               if (data.ok === true) {
-                return Promise.resolve({
-                            TAG: /* Ok */0,
-                            _0: data
-                          });
+                return Promise.resolve(data);
               } else {
-                return Promise.resolve({
-                            TAG: /* Error */1,
-                            _0: Js_option.getWithDefault("Unknown JS error", data.error)
+                return Promise.reject({
+                            RE_EXN_ID: ListEventsException,
+                            _1: Js_option.getWithDefault("Unknown JS error", data.error)
                           });
               }
             });
@@ -170,20 +227,17 @@ function handler($$event) {
 }
 
 if ((require.main === module)) {
-  listEvents(listEventsJS, {
-          start: 90,
-          end: 400,
-          firstIndex: 0,
-          afterToken: undefined
-        }).then(function (result) {
+  listEvents(listEventsJS, JSON.parse("{\n        arguments: {\n            timeRange: {\n                start: 90,\n                end: 400,\n            },\n            firstIndex: 0,\n            afterToken: None\n        }\n    }")).then(function (result) {
         console.log("result:", result);
         return Promise.resolve(true);
       });
 }
 
+exports.RequestCodecs = RequestCodecs;
 exports.Codecs = Codecs;
 exports.listEventsJS = listEventsJS;
+exports.ListEventsException = ListEventsException;
 exports.listEvents = listEvents;
 exports.listEventsPartial = listEventsPartial;
 exports.handler = handler;
-/* lastEvaluatedEvent Not a pure module */
+/* timeRange Not a pure module */

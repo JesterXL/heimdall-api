@@ -26,29 +26,21 @@ function stubDynamo(param, param$1, param$2, param$3) {
 }
 
 Test.testAsync("should cool async", undefined, (function (cb) {
-        $$Promise.$$catch(ListEvents.listEvents(stubDynamo, {
-                    start: 90,
-                    end: 400,
-                    firstIndex: 1,
-                    afterToken: undefined
-                  }).then(function (result) {
-                  if (result.TAG === /* Ok */0) {
-                    var firstEvent = Belt_Array.get(result._0.items, 0);
-                    if (firstEvent !== undefined) {
-                      Assertions.stringEqual(undefined, firstEvent.eventName, "Test");
-                      Curry._2(cb, 1, undefined);
-                      return Promise.resolve(true);
-                    } else {
-                      Test.fail(undefined, undefined);
-                      Curry._2(cb, 1, undefined);
-                      return Promise.resolve(false);
-                    }
+        var stubEvent = JSON.parse("\n	{\n		\"arguments\": {\n			\"timeRange\": {\n				\"start\": 90,\n				\"end\": 400\n			},\n			\"first\": 1,\n			\"after\": \"\"\n		}\n	}");
+        $$Promise.$$catch(ListEvents.listEvents(stubDynamo, stubEvent).then(function (data) {
+                  var firstEvent = Belt_Array.get(data.items, 0);
+                  if (firstEvent !== undefined) {
+                    Assertions.stringEqual(undefined, firstEvent.eventName, "Test");
+                    Curry._2(cb, 1, undefined);
+                    return Promise.resolve(true);
+                  } else {
+                    Test.fail("Failed to find a first item", undefined);
+                    Curry._2(cb, 1, undefined);
+                    return Promise.resolve(false);
                   }
-                  Test.fail(undefined, undefined);
-                  Curry._2(cb, 1, undefined);
-                  return Promise.resolve(false);
-                }), (function (param) {
-                Test.fail(undefined, undefined);
+                }), (function (error) {
+                console.log("error:", error);
+                Test.fail("listEvents exception", undefined);
                 Curry._2(cb, 1, undefined);
                 return Promise.resolve(false);
               }));
