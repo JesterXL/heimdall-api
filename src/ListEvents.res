@@ -83,18 +83,18 @@ module Codecs = {
 
     let permissionToString = permission =>
         switch permission {
-        | Free => "free"
-        | Blocked => "blocked"
-        | Request => "request"
+        | Free => "Free"
+        | Blocked => "Blocked"
+        | Request => "Request"
         }
 
     let event = Jzon.object6(
         ({ eventName, lastUpdated, permission, end, primaryKey, start }) => ( eventName, lastUpdated, permissionToString(permission), end, primaryKey, start ),
         (( eventName, lastUpdated, permissionString, end, primaryKey, start )) =>
             switch permissionString {
-            | "free" => { eventName, lastUpdated, permission: Free , end, primaryKey, start } -> Ok
-            | "blocked" => { eventName, lastUpdated, permission: Blocked , end, primaryKey, start } -> Ok
-            | "request" => { eventName, lastUpdated, permission: Request , end, primaryKey, start } -> Ok
+            | "Free" => { eventName, lastUpdated, permission: Free , end, primaryKey, start } -> Ok
+            | "Blocked" => { eventName, lastUpdated, permission: Blocked , end, primaryKey, start } -> Ok
+            | "Request" => { eventName, lastUpdated, permission: Request , end, primaryKey, start } -> Ok
             | x => Error(#UnexpectedJsonValue([Field("permission")], x))
             },
         Jzon.field("eventName", Jzon.string),
@@ -126,9 +126,9 @@ module Codecs = {
         ({ id, name, timeRange, permission }) => ( id, name, timeRange, permissionToString(permission) ),
         (( id, name, timeRange, permissionString )) =>
             switch permissionString {
-            | "free" => { id, name, timeRange, permission: Free } -> Ok
-            | "blocked" => { id, name, timeRange, permission: Blocked } -> Ok
-            | "request" => { id, name, timeRange, permission: Request } -> Ok
+            | "Free" => { id, name, timeRange, permission: Free } -> Ok
+            | "Blocked" => { id, name, timeRange, permission: Blocked } -> Ok
+            | "Request" => { id, name, timeRange, permission: Request } -> Ok
             | x => Error(#UnexpectedJsonValue([Field("permission")], x))
             },
         Jzon.field("id", Jzon.string),
@@ -272,14 +272,13 @@ let listEventsPartial = listEvents(listEventsJS, getTotalItemsJS)
 
 let handler = event => {
     Js.log2("event:", event)
-    let _ =
-        listEventsPartial(event)
-        ->then(
-            response => {
-                Js.log2("response:", response)
-                resolve(response)
-            }
-        )
+    listEventsPartial(event)
+    ->then(
+        response => {
+            Js.log2("response:", response)
+            resolve(response)
+        }
+    )
 }
 
 if %raw(`require.main === module`) {

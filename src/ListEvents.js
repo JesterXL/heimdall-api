@@ -70,11 +70,11 @@ var lastEvaluatedEvent = Jzon.object3((function (param) {
 function permissionToString(permission) {
   switch (permission) {
     case /* Free */0 :
-        return "free";
+        return "Free";
     case /* Blocked */1 :
-        return "blocked";
+        return "Blocked";
     case /* Request */2 :
-        return "request";
+        return "Request";
     
   }
 }
@@ -96,7 +96,7 @@ var $$event = Jzon.object6((function (param) {
         var lastUpdated = param[1];
         var eventName = param[0];
         switch (permissionString) {
-          case "blocked" :
+          case "Blocked" :
               return {
                       TAG: /* Ok */0,
                       _0: {
@@ -108,7 +108,7 @@ var $$event = Jzon.object6((function (param) {
                         start: start
                       }
                     };
-          case "free" :
+          case "Free" :
               return {
                       TAG: /* Ok */0,
                       _0: {
@@ -120,7 +120,7 @@ var $$event = Jzon.object6((function (param) {
                         start: start
                       }
                     };
-          case "request" :
+          case "Request" :
               return {
                       TAG: /* Ok */0,
                       _0: {
@@ -183,7 +183,7 @@ var eventNode = Jzon.object4((function (param) {
         var name = param[1];
         var id = param[0];
         switch (permissionString) {
-          case "blocked" :
+          case "Blocked" :
               return {
                       TAG: /* Ok */0,
                       _0: {
@@ -193,7 +193,7 @@ var eventNode = Jzon.object4((function (param) {
                         permission: /* Blocked */1
                       }
                     };
-          case "free" :
+          case "Free" :
               return {
                       TAG: /* Ok */0,
                       _0: {
@@ -203,7 +203,7 @@ var eventNode = Jzon.object4((function (param) {
                         permission: /* Free */0
                       }
                     };
-          case "request" :
+          case "Request" :
               return {
                       TAG: /* Ok */0,
                       _0: {
@@ -407,11 +407,10 @@ function listEventsPartial(param) {
 
 function handler($$event) {
   console.log("event:", $$event);
-  listEvents(listEventsJS, getTotalItemsJS, $$event).then(function (response) {
-        console.log("response:", response);
-        return Promise.resolve(response);
-      });
-  
+  return listEvents(listEventsJS, getTotalItemsJS, $$event).then(function (response) {
+              console.log("response:", response);
+              return Promise.resolve(response);
+            });
 }
 
 if ((require.main === module)) {
