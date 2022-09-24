@@ -13,6 +13,31 @@ provider:
     lambda: true
   environment:
     NODE_ENV: ${sls:stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - 'xray:PutTraceSegments'
+            - 'xray:PutTelemetryRecords'
+          Resource: '*'
+        - Effect: Allow
+          Action:
+            - 'logs:CreateLogGroup'
+          Resource:
+            - '*'
+        - Effect: Allow
+          Action:
+            - 'logs:CreateLogGroup'
+            - 'logs:CreateLogStream'
+            - 'logs:PutLogEvents'
+          Resource: '*'
+        - Effect: Allow
+          Action:
+            - 'dynamodb:*'
+          Resource: '*'
+
+        
 
 plugins:
   - serverless-appsync-plugin
@@ -22,7 +47,7 @@ plugins:
 
 functions:
   listEvents:
-    role: ${self:custom.config.iam.functionRole}
+    # role: ${self:custom.config.iam.functionRole}
     handler: src/ListEvents.handler
     environment:
       NODE_ENV: ${sls:stage}
@@ -32,7 +57,7 @@ functions:
     #   preTrafficHook: minMaxPreHook
     #   postTrafficHook: minMaxPostHook
   validateJWT:
-    role: ${self:custom.config.iam.functionRole}
+    # role: ${self:custom.config.iam.functionRole}
     handler: src/ValidateJWT.handler
     environment:
       NODE_ENV: ${sls:stage}

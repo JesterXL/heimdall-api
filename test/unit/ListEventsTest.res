@@ -13,6 +13,7 @@ let stubDynamo = (_, _, _, _) =>
 			{ 
 				ListEvents.Codecs.items: [{ eventName: "Test", lastUpdated: 100, permission: Free, end: 200, primaryKey: "event", start: 100 }], 
 				lastEvaluatedKey: None,
+				hasNextPage: false,
 				ok: true,
 				error: None
 			},
@@ -20,8 +21,10 @@ let stubDynamo = (_, _, _, _) =>
 		)
 	)
 
+let stubDynamoItems = () =>
+		resolve(3)
 
-testAsync("should cool async", cb => {
+testAsync("should list some items", cb => {
 	let stubEvent = Js.Json.parseExn(`
 	{
 		"arguments": {
@@ -33,21 +36,33 @@ testAsync("should cool async", cb => {
 			"after": ""
 		}
 	}`)
-	let _ = listEvents(stubDynamo, stubEvent)
+	let _ = listEvents(stubDynamo, stubDynamoItems, stubEvent)
 	->then(
-		data =>
-			switch Belt.Array.get(data.items, 0) {
+		json => {
+			switch Jzon.decodeWith(json, Codecs.eventsResponse) {
+			| Error(reason) => {
+				Js.log2("error decoding:", reason)
+				fail(~message="Failed decoding", ())
+				cb(~planned=1, ())
+				resolve(false)
+			}
+			| Ok(eventsResponse) => {
+				switch Belt.Array.get(eventsResponse.edges, 0) {
 				| None => {
 					fail(~message="Failed to find a first item", ())
 					cb(~planned=1, ())
 					resolve(false)
 				}
 				| Some(firstEvent) => {
-					stringEqual(firstEvent.eventName, "Test")
+					stringEqual(firstEvent.node.name, "Test")
 					cb(~planned=1, ())
 					resolve(true)
 				}
 			}
+			}
+			}
+			
+		}
 	)
 	->catch(
 		error => {
@@ -57,5 +72,24 @@ testAsync("should cool async", cb => {
 			resolve(false)
 		}
 	)
-	
+})
+
+
+testAsync("should get total number of items", cb => {
+	let _ = getTotalItems(stubDynamoItems)
+	->then(
+		total => {
+			intEqual(3, total)
+			cb(~planned=1, ())
+			resolve(true)
+		}
+	)
+	->catch(
+		error => {
+			Js.log2("error:", error)
+			fail(~message=`getTotalItems exception`, ())
+			cb(~planned=1, ())
+			resolve(false)
+		}
+	)
 })

@@ -20,24 +20,36 @@ function stubDynamo(param, param$1, param$2, param$3) {
                       start: 100
                     }],
                   lastEvaluatedKey: undefined,
+                  hasNextPage: false,
                   ok: true,
                   error: undefined
                 }, ListEvents.Codecs.listEventsDynamoResponse));
 }
 
-Test.testAsync("should cool async", undefined, (function (cb) {
+function stubDynamoItems(param) {
+  return Promise.resolve(3);
+}
+
+Test.testAsync("should list some items", undefined, (function (cb) {
         var stubEvent = JSON.parse("\n	{\n		\"arguments\": {\n			\"timeRange\": {\n				\"start\": 90,\n				\"end\": 400\n			},\n			\"first\": 1,\n			\"after\": \"\"\n		}\n	}");
-        $$Promise.$$catch(ListEvents.listEvents(stubDynamo, stubEvent).then(function (data) {
-                  var firstEvent = Belt_Array.get(data.items, 0);
-                  if (firstEvent !== undefined) {
-                    Assertions.stringEqual(undefined, firstEvent.eventName, "Test");
-                    Curry._2(cb, 1, undefined);
-                    return Promise.resolve(true);
-                  } else {
-                    Test.fail("Failed to find a first item", undefined);
-                    Curry._2(cb, 1, undefined);
-                    return Promise.resolve(false);
+        $$Promise.$$catch(ListEvents.listEvents(stubDynamo, stubDynamoItems, stubEvent).then(function (json) {
+                  var reason = Jzon.decodeWith(json, ListEvents.Codecs.eventsResponse);
+                  if (reason.TAG === /* Ok */0) {
+                    var firstEvent = Belt_Array.get(reason._0.edges, 0);
+                    if (firstEvent !== undefined) {
+                      Assertions.stringEqual(undefined, firstEvent.node.name, "Test");
+                      Curry._2(cb, 1, undefined);
+                      return Promise.resolve(true);
+                    } else {
+                      Test.fail("Failed to find a first item", undefined);
+                      Curry._2(cb, 1, undefined);
+                      return Promise.resolve(false);
+                    }
                   }
+                  console.log("error decoding:", reason._0);
+                  Test.fail("Failed decoding", undefined);
+                  Curry._2(cb, 1, undefined);
+                  return Promise.resolve(false);
                 }), (function (error) {
                 console.log("error:", error);
                 Test.fail("listEvents exception", undefined);
@@ -47,5 +59,20 @@ Test.testAsync("should cool async", undefined, (function (cb) {
         
       }));
 
+Test.testAsync("should get total number of items", undefined, (function (cb) {
+        $$Promise.$$catch(ListEvents.getTotalItems(stubDynamoItems).then(function (total) {
+                  Assertions.intEqual(undefined, 3, total);
+                  Curry._2(cb, 1, undefined);
+                  return Promise.resolve(true);
+                }), (function (error) {
+                console.log("error:", error);
+                Test.fail("getTotalItems exception", undefined);
+                Curry._2(cb, 1, undefined);
+                return Promise.resolve(false);
+              }));
+        
+      }));
+
 exports.stubDynamo = stubDynamo;
+exports.stubDynamoItems = stubDynamoItems;
 /*  Not a pure module */
