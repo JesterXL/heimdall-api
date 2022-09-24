@@ -1,6 +1,6 @@
 const aws = require('aws-sdk')
 const dynamo = new aws.DynamoDB.DocumentClient({ region: 'us-east-1'})
-const dynamoRoot = new aws.DynamoDB({ region: 'us-east-1' })
+// const dynamoRoot = new aws.DynamoDB({ region: 'us-east-1' })
 
 // dynamo.query({
 //     TableName: 'eventsAndApps',
@@ -49,23 +49,22 @@ const listEvents = (startTime, endTime, first, lastEvaluatedKey) =>
             Promise.resolve({ ok: false, error: `DynamoDB error: ${error?.message}`, items: [] })
     )
 
-const getTotalItems = () =>
-    dynamoRoot.describeTable({
-        TableName: 'eventsAndApps',
-    })
-    .promise()
-    .then(
-        ({ Table }) =>
-            Table
-    )
-    .then(
-        ({ ItemCount }) =>
-            ItemCount
-    )
+// const getTotalItems = () =>
+//     dynamoRoot.describeTable({
+//         TableName: 'eventsAndApps',
+//     })
+//     .promise()
+//     .then(
+//         ({ Table }) =>
+//             Table
+//     )
+//     .then(
+//         ({ ItemCount }) =>
+//             ItemCount
+//     )
 
-getTotalItems().then(console.log)
+// getTotalItems().then(console.log)
 
 module.exports = {
-    listEvents,
-    getTotalItems
+    listEvents
 }

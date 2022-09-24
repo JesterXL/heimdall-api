@@ -1,13 +1,13 @@
 type Query {
   listEvents(timeRange: InputTimeRange!, first: Int!, after: String!): EventsResponse!
-  createEvent(event: InputCreateEvent!): EventNode!
+  createEvent(event: InputCreateEvent!): Event!
   deleteEvent(eventID: ID!): ID!
-  editEvent(event: InputCreateEvent!): EventNode!
+  editEvent(event: InputCreateEvent!): Event!
 
-  createApp(app: InputApp!): AppNode!
+  createApp(app: InputApp!): App!
   listApps(first: Int!, after: String!): AppsResponse!
   deleteApp(id: ID!): ID!
-  updateApp(app: InputApp!): AppNode!
+  updateApp(app: InputApp!): App!
 }
 
 input InputTimeRange {
@@ -16,31 +16,22 @@ input InputTimeRange {
 }
 
 type EventsResponse {
-  totalCount: Int!
-  edges: [EventsEdge!]!
-  pageInfo: PageInfo!
+  events: [Event!]
+  cursor: String
 }
 
-type EventsEdge {
-  node: EventNode!
-  cursor: String!
-}
-
-type EventNode {
-  id: ID!
-  name: String!
-  timeRange: TimeRange!
-  permission: Permission! 
+type Event {
+  eventName: String!
+  lastUpdated: Int!
+  permission: Permission!
+  end: Int!
+  primaryKey: ID!
+  start: Int!
 }
 
 type TimeRange {
   start: Float!
   end: Float!
-}
-
-type PageInfo {
-  endCursor: String!
-  hasNextPage: Boolean!
 }
 
 enum Permission {
@@ -62,7 +53,7 @@ input InputApp {
   appType: AppType!
 }
 
-type AppNode {
+type App {
   id: ID!
   name: String!
   owner: String!
@@ -77,13 +68,7 @@ enum AppType {
 }
 
 type AppsResponse {
-  totalCount: Int!
-  edges: [AppsEdge!]!
-  pageInfo: PageInfo!
-}
-
-type AppsEdge {
-  node: AppNode!
-  cursor: String!
+  apps: [App!]
+  cursor: String
 }
 

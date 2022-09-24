@@ -73,6 +73,13 @@ module Codecs = {
         Jzon.field("end", Jzon.int)
     )
 
+    let encodeLastEvaluatedEvent = lastEvaluatedEventMaybe =>
+    switch lastEvaluatedEventMaybe {
+    | None => ""
+    | Some(event) => Jzon.encodeWith(event, lastEvaluatedEvent) -> Js.Json.stringify(_)
+    }
+
+
     type listEventsDynamoResponse = {
         items: Js.Array.t<event>,
         lastEvaluatedKey: Js.Option.t<lastEvaluatedEvent>,
@@ -115,100 +122,18 @@ module Codecs = {
         Jzon.field("error", Jzon.string) -> Jzon.optional
     )
 
-    type eventNode = {
-        id: string,
-        name: string,
-        timeRange: timeRange,
-        permission: permission
-    }
-
-    let eventNode = Jzon.object4(
-        ({ id, name, timeRange, permission }) => ( id, name, timeRange, permissionToString(permission) ),
-        (( id, name, timeRange, permissionString )) =>
-            switch permissionString {
-            | "Free" => { id, name, timeRange, permission: Free } -> Ok
-            | "Blocked" => { id, name, timeRange, permission: Blocked } -> Ok
-            | "Request" => { id, name, timeRange, permission: Request } -> Ok
-            | x => Error(#UnexpectedJsonValue([Field("permission")], x))
-            },
-        Jzon.field("id", Jzon.string),
-        Jzon.field("name", Jzon.string),
-        Jzon.field("timeRange", timeRange),
-        Jzon.field("permission", Jzon.string)
-    )
-
-    type eventsEdge = {
-        node: eventNode,
-        cursor: string
-    }
-
-    let eventsEdge = Jzon.object2(
-        ({ node, cursor }) => ( node, cursor ),
-        (( node, cursor )) => { node, cursor } -> Ok,
-        Jzon.field("node", eventNode),
-        Jzon.field("cursor", Jzon.string)
-    )
-
-    type pageInfo = {
-        endCursor: string,
-        hasNextPage: bool
-    }
-
-    let pageInfo = Jzon.object2(
-        ({ endCursor, hasNextPage }) => ( endCursor, hasNextPage ),
-        (( endCursor, hasNextPage )) => { endCursor, hasNextPage } -> Ok,
-        Jzon.field("endCursor", Jzon.string),
-        Jzon.field("hasNextPage", Jzon.bool)
-    )
-
     type eventsResponse = {
-        totalCount: int,
-        edges: Js.Array.t<eventsEdge>,
-        pageInfo: pageInfo
-    }
+        events: Js.Array.t<event>,
+        cursor: Js.Option.t<string>
+    } 
 
-    let eventsResponse = Jzon.object3(
-        ({ totalCount, edges, pageInfo }) => ( totalCount, edges, pageInfo ),
-        (( totalCount, edges, pageInfo )) => { totalCount, edges, pageInfo } -> Ok,
-        Jzon.field("totalCount", Jzon.int),
-        Jzon.field("edges", Jzon.array(eventsEdge)),
-        Jzon.field("pageInfo", pageInfo) 
+    let eventsResponse = Jzon.object2(
+        ({ events, cursor }) => ( events, cursor ),
+        (( events, cursor )) => { events, cursor } -> Ok,
+        Jzon.field("events", Jzon.array(event)),
+        Jzon.field("cursor", Jzon.string)->Jzon.optional
     )
-
-    let mapEventToEventNode = (event:event) =>
-    {
-        id: event.primaryKey,
-        name: event.eventName,
-        timeRange: { start: event.start, end: event.end },
-        permission: event.permission
-    }
-
-    let encodeLastEvaluatedEvent = lastEvaluatedEventMaybe =>
-        switch lastEvaluatedEventMaybe {
-        | None => ""
-        | Some(event) => Jzon.encodeWith(event, lastEvaluatedEvent) -> Js.Json.stringify(_)
-        }
-
-    let mapEventNodeToEventsEdge = (eventNode:eventNode) =>
-    {
-        node: eventNode,
-        cursor: {
-            primaryKey: eventNode.id, 
-            start: eventNode.timeRange.start, 
-            end: eventNode.timeRange.end
-        } -> Some -> encodeLastEvaluatedEvent
-    }
-        
 }
-
-
-@module("./services/query.js") external getTotalItemsJS: (()) => Promise.t<int> = "getTotalItems"
-
-let getTotalItems = getTotalItemsFunc =>
-    getTotalItemsFunc()
-
-let getTotalItemsPartial = getTotalItems(getTotalItemsJS)
-
 
 @module("./services/query.js") external listEventsJS: (int, int, int, string) => Promise.t<Js.Json.t> = "listEvents"
 
@@ -216,31 +141,28 @@ exception ListEventsException(string)
 
 let getEndCursor = (data:Codecs.listEventsDynamoResponse) => {
     if(data.hasNextPage === true) {
-        Codecs.encodeLastEvaluatedEvent(data.lastEvaluatedKey)
+        Some(Codecs.encodeLastEvaluatedEvent(data.lastEvaluatedKey))
     } else {
-        ""
+        None
     }
 }
-let listEvents = (listEventsFromDynamoFunc, getTotalItemsFunc, event) => {
+let listEvents = (listEventsFromDynamoFunc, event) => {
     switch Jzon.decodeWith(event, Codecs.inputEvent) {
     | Error(reason) => reject(ListEventsException(Jzon.DecodingError.toString(reason)))
     | Ok(options) => resolve(options)
     }
     ->then(
         event =>
-            Promise.all2((
-                listEventsFromDynamoFunc(event.arguments.timeRange.start, event.arguments.timeRange.end, event.arguments.first, event.arguments.after),
-                getTotalItems(getTotalItemsFunc)
-            ))
+            listEventsFromDynamoFunc(event.arguments.timeRange.start, event.arguments.timeRange.end, event.arguments.first, event.arguments.after)
     )
     ->then(
-        (( listEventsResponse, totalItems )) => {
+        listEventsResponse => {
             Js.log2("listEvents response:", listEventsResponse)
             switch Jzon.decodeWith(listEventsResponse, Codecs.listEventsDynamoResponse) {
             | Error(reason) => reject(ListEventsException("listEvents failed to decode the dy response: " ++ Jzon.DecodingError.toString(reason)))
             | Ok(data) => {
                 if(data.ok === true) {
-                    resolve((data, totalItems))
+                    resolve(data)
                 } else {
                     reject(ListEventsException(Js.Option.getWithDefault("Unknown JS error", data.error)))
                 }
@@ -249,18 +171,10 @@ let listEvents = (listEventsFromDynamoFunc, getTotalItemsFunc, event) => {
         }
     )
     ->then(
-        (( data, totalItems )) => {
-            let edges =
-                Js.Array.map(Codecs.mapEventToEventNode, data.items)
-                -> Js.Array.map(Codecs.mapEventNodeToEventsEdge, _)
-
-            { 
-                Codecs.totalCount: totalItems,
-                edges: edges,
-                pageInfo: {
-                    endCursor: getEndCursor(data),
-                    hasNextPage: data.hasNextPage
-                }
+        data => {
+            {
+                events: data.items,
+                cursor: getEndCursor(data)
             }
             -> Jzon.encodeWith(_, Codecs.eventsResponse)
             -> resolve
@@ -268,7 +182,7 @@ let listEvents = (listEventsFromDynamoFunc, getTotalItemsFunc, event) => {
     )
 }
 
-let listEventsPartial = listEvents(listEventsJS, getTotalItemsJS)
+let listEventsPartial = listEvents(listEventsJS)
 
 let handler = event => {
     Js.log2("event:", event)

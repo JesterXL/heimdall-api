@@ -67,6 +67,14 @@ var lastEvaluatedEvent = Jzon.object3((function (param) {
               };
       }), Jzon.field("PK", Jzon.string), Jzon.field("start", Jzon.$$int), Jzon.field("end", Jzon.$$int));
 
+function encodeLastEvaluatedEvent(lastEvaluatedEventMaybe) {
+  if (lastEvaluatedEventMaybe !== undefined) {
+    return JSON.stringify(Jzon.encodeWith(lastEvaluatedEventMaybe, lastEvaluatedEvent));
+  } else {
+    return "";
+  }
+}
+
 function permissionToString(permission) {
   switch (permission) {
     case /* Free */0 :
@@ -170,170 +178,32 @@ var listEventsDynamoResponse = Jzon.object5((function (param) {
               };
       }), Jzon.field("items", Jzon.array($$event)), Jzon.optional(Jzon.field("lastEvaluatedKey", lastEvaluatedEvent)), Jzon.field("hasNextPage", Jzon.bool), Jzon.field("ok", Jzon.bool), Jzon.optional(Jzon.field("error", Jzon.string)));
 
-var eventNode = Jzon.object4((function (param) {
+var eventsResponse = Jzon.object2((function (param) {
         return [
-                param.id,
-                param.name,
-                param.timeRange,
-                permissionToString(param.permission)
-              ];
-      }), (function (param) {
-        var permissionString = param[3];
-        var timeRange = param[2];
-        var name = param[1];
-        var id = param[0];
-        switch (permissionString) {
-          case "Blocked" :
-              return {
-                      TAG: /* Ok */0,
-                      _0: {
-                        id: id,
-                        name: name,
-                        timeRange: timeRange,
-                        permission: /* Blocked */1
-                      }
-                    };
-          case "Free" :
-              return {
-                      TAG: /* Ok */0,
-                      _0: {
-                        id: id,
-                        name: name,
-                        timeRange: timeRange,
-                        permission: /* Free */0
-                      }
-                    };
-          case "Request" :
-              return {
-                      TAG: /* Ok */0,
-                      _0: {
-                        id: id,
-                        name: name,
-                        timeRange: timeRange,
-                        permission: /* Request */2
-                      }
-                    };
-          default:
-            return {
-                    TAG: /* Error */1,
-                    _0: {
-                      NAME: "UnexpectedJsonValue",
-                      VAL: [
-                        [{
-                            TAG: /* Field */0,
-                            _0: "permission"
-                          }],
-                        permissionString
-                      ]
-                    }
-                  };
-        }
-      }), Jzon.field("id", Jzon.string), Jzon.field("name", Jzon.string), Jzon.field("timeRange", timeRange), Jzon.field("permission", Jzon.string));
-
-var eventsEdge = Jzon.object2((function (param) {
-        return [
-                param.node,
+                param.events,
                 param.cursor
               ];
       }), (function (param) {
         return {
                 TAG: /* Ok */0,
                 _0: {
-                  node: param[0],
+                  events: param[0],
                   cursor: param[1]
                 }
               };
-      }), Jzon.field("node", eventNode), Jzon.field("cursor", Jzon.string));
-
-var pageInfo = Jzon.object2((function (param) {
-        return [
-                param.endCursor,
-                param.hasNextPage
-              ];
-      }), (function (param) {
-        return {
-                TAG: /* Ok */0,
-                _0: {
-                  endCursor: param[0],
-                  hasNextPage: param[1]
-                }
-              };
-      }), Jzon.field("endCursor", Jzon.string), Jzon.field("hasNextPage", Jzon.bool));
-
-var eventsResponse = Jzon.object3((function (param) {
-        return [
-                param.totalCount,
-                param.edges,
-                param.pageInfo
-              ];
-      }), (function (param) {
-        return {
-                TAG: /* Ok */0,
-                _0: {
-                  totalCount: param[0],
-                  edges: param[1],
-                  pageInfo: param[2]
-                }
-              };
-      }), Jzon.field("totalCount", Jzon.$$int), Jzon.field("edges", Jzon.array(eventsEdge)), Jzon.field("pageInfo", pageInfo));
-
-function mapEventToEventNode($$event) {
-  return {
-          id: $$event.primaryKey,
-          name: $$event.eventName,
-          timeRange: {
-            start: $$event.start,
-            end: $$event.end
-          },
-          permission: $$event.permission
-        };
-}
-
-function encodeLastEvaluatedEvent(lastEvaluatedEventMaybe) {
-  if (lastEvaluatedEventMaybe !== undefined) {
-    return JSON.stringify(Jzon.encodeWith(lastEvaluatedEventMaybe, lastEvaluatedEvent));
-  } else {
-    return "";
-  }
-}
-
-function mapEventNodeToEventsEdge(eventNode) {
-  return {
-          node: eventNode,
-          cursor: encodeLastEvaluatedEvent({
-                primaryKey: eventNode.id,
-                start: eventNode.timeRange.start,
-                end: eventNode.timeRange.end
-              })
-        };
-}
+      }), Jzon.field("events", Jzon.array($$event)), Jzon.optional(Jzon.field("cursor", Jzon.string)));
 
 var Codecs = {
   timeRange: timeRange,
   $$arguments: $$arguments,
   inputEvent: inputEvent,
   lastEvaluatedEvent: lastEvaluatedEvent,
+  encodeLastEvaluatedEvent: encodeLastEvaluatedEvent,
   permissionToString: permissionToString,
   $$event: $$event,
   listEventsDynamoResponse: listEventsDynamoResponse,
-  eventNode: eventNode,
-  eventsEdge: eventsEdge,
-  pageInfo: pageInfo,
-  eventsResponse: eventsResponse,
-  mapEventToEventNode: mapEventToEventNode,
-  encodeLastEvaluatedEvent: encodeLastEvaluatedEvent,
-  mapEventNodeToEventsEdge: mapEventNodeToEventsEdge
+  eventsResponse: eventsResponse
 };
-
-function getTotalItemsJS(prim) {
-  return QueryJs.getTotalItems();
-}
-
-function getTotalItems(getTotalItemsFunc) {
-  return Curry._1(getTotalItemsFunc, undefined);
-}
-
-var getTotalItemsPartial = QueryJs.getTotalItems();
 
 function listEventsJS(prim0, prim1, prim2, prim3) {
   return QueryJs.listEvents(prim0, prim1, prim2, prim3);
@@ -344,12 +214,11 @@ var ListEventsException = /* @__PURE__ */Caml_exceptions.create("ListEvents.List
 function getEndCursor(data) {
   if (data.hasNextPage === true) {
     return encodeLastEvaluatedEvent(data.lastEvaluatedKey);
-  } else {
-    return "";
   }
+  
 }
 
-function listEvents(listEventsFromDynamoFunc, getTotalItemsFunc, $$event) {
+function listEvents(listEventsFromDynamoFunc, $$event) {
   var reason = Jzon.decodeWith($$event, inputEvent);
   var tmp;
   tmp = reason.TAG === /* Ok */0 ? Promise.resolve(reason._0) : Promise.reject({
@@ -357,12 +226,8 @@ function listEvents(listEventsFromDynamoFunc, getTotalItemsFunc, $$event) {
           _1: Jzon.DecodingError.toString(reason._0)
         });
   return tmp.then(function ($$event) {
-                  return Promise.all([
-                              Curry._4(listEventsFromDynamoFunc, $$event.arguments.timeRange.start, $$event.arguments.timeRange.end, $$event.arguments.first, $$event.arguments.after),
-                              Curry._1(getTotalItemsFunc, undefined)
-                            ]);
-                }).then(function (param) {
-                var listEventsResponse = param[0];
+                  return Curry._4(listEventsFromDynamoFunc, $$event.arguments.timeRange.start, $$event.arguments.timeRange.end, $$event.arguments.first, $$event.arguments.after);
+                }).then(function (listEventsResponse) {
                 console.log("listEvents response:", listEventsResponse);
                 var reason = Jzon.decodeWith(listEventsResponse, listEventsDynamoResponse);
                 if (reason.TAG !== /* Ok */0) {
@@ -373,57 +238,44 @@ function listEvents(listEventsFromDynamoFunc, getTotalItemsFunc, $$event) {
                 }
                 var data = reason._0;
                 if (data.ok === true) {
-                  return Promise.resolve([
-                              data,
-                              param[1]
-                            ]);
+                  return Promise.resolve(data);
                 } else {
                   return Promise.reject({
                               RE_EXN_ID: ListEventsException,
                               _1: Js_option.getWithDefault("Unknown JS error", data.error)
                             });
                 }
-              }).then(function (param) {
-              var data = param[0];
-              var __x = data.items.map(mapEventToEventNode);
-              var edges = __x.map(mapEventNodeToEventsEdge);
-              var __x_totalCount = param[1];
-              var __x_pageInfo = {
-                endCursor: getEndCursor(data),
-                hasNextPage: data.hasNextPage
+              }).then(function (data) {
+              var __x_events = data.items;
+              var __x_cursor = getEndCursor(data);
+              var __x = {
+                events: __x_events,
+                cursor: __x_cursor
               };
-              var __x$1 = {
-                totalCount: __x_totalCount,
-                edges: edges,
-                pageInfo: __x_pageInfo
-              };
-              return Promise.resolve(Jzon.encodeWith(__x$1, eventsResponse));
+              return Promise.resolve(Jzon.encodeWith(__x, eventsResponse));
             });
 }
 
 function listEventsPartial(param) {
-  return listEvents(listEventsJS, getTotalItemsJS, param);
+  return listEvents(listEventsJS, param);
 }
 
 function handler($$event) {
   console.log("event:", $$event);
-  return listEvents(listEventsJS, getTotalItemsJS, $$event).then(function (response) {
+  return listEvents(listEventsJS, $$event).then(function (response) {
               console.log("response:", response);
               return Promise.resolve(response);
             });
 }
 
 if ((require.main === module)) {
-  listEvents(listEventsJS, getTotalItemsJS, JSON.parse("{\n        arguments: {\n            timeRange: {\n                start: 90,\n                end: 400,\n            },\n            firstIndex: 0,\n            afterToken: None\n        }\n    }")).then(function (result) {
+  listEvents(listEventsJS, JSON.parse("{\n        arguments: {\n            timeRange: {\n                start: 90,\n                end: 400,\n            },\n            firstIndex: 0,\n            afterToken: None\n        }\n    }")).then(function (result) {
         console.log("result:", result);
         return Promise.resolve(true);
       });
 }
 
 exports.Codecs = Codecs;
-exports.getTotalItemsJS = getTotalItemsJS;
-exports.getTotalItems = getTotalItems;
-exports.getTotalItemsPartial = getTotalItemsPartial;
 exports.listEventsJS = listEventsJS;
 exports.ListEventsException = ListEventsException;
 exports.getEndCursor = getEndCursor;
