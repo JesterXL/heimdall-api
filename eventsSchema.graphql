@@ -25,7 +25,7 @@ type Event {
   lastUpdated: Int!
   permission: Permission!
   end: Int!
-  primaryKey: ID!
+  PK: ID!
   start: Int!
 }
 
